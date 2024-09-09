@@ -1,30 +1,26 @@
-import openai
 import os
 from dotenv import load_dotenv
-import asyncio
-from chat import call_chatgpt_with_functions
+import threading
+from assistant import assistantChat, assistantWithFunctions
 
-# Cargar variables de entorno
+
 load_dotenv()
 
-# Configuración de la API
-openai.api_key = os.getenv("OPENAI_API_KEY")
-organization = os.getenv("ORG")
-
-# Loop de interacción con el usuario
-def start_chat():
+def chat_thread():
     print("ChatGPT está listo. Escribe 'exit' para salir.")
+    conversation_history = []
 
     while True:
         user_message = input('> ')
-
+        
         if user_message.lower() == 'exit':
             print("Saliendo del chat...")
             break
 
-        # Llamar a la función de ChatGPT con el mensaje del usuario
-        response = asyncio.run(call_chatgpt_with_functions(user_message))
-        print(response)  # Mostrar la respuesta en la consola
+
+        response = assistantWithFunctions(user_message, conversation_history)
+        print(response)
 
 if __name__ == "__main__":
-    start_chat()
+    chat_thread = threading.Thread(target=chat_thread)
+    chat_thread.start()
