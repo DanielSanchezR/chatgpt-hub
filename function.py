@@ -1,5 +1,6 @@
 import openai
 import os
+from assistant import gpt_call_assistant
 from dotenv import load_dotenv
 from apiFunctions import get_book_titles, get_spell_info, get_wikipedia_summary
 
@@ -25,8 +26,13 @@ function = [
     }
 ]
 
-def gpt_call_function(user_input):
+def gpt_call_function(user_input, thread_id):
     try:
+        if thread_id is None:
+            thread = None
+        else:
+            thread = thread_id
+            
         # Create a chat completion request with function calling
         response = openai.chat.completions.create(
             model="gpt-3.5-turbo-0613",
@@ -40,7 +46,6 @@ def gpt_call_function(user_input):
 
         # Extract the assistant's message
         message = response.choices[0].message.content
-        print(message)
 
         # Comprobar si ChatGPT quiere llamar a la función
         if response.choices[0].message.function_call:
@@ -48,24 +53,25 @@ def gpt_call_function(user_input):
             function_args = response.choices[0].message.function_call.arguments
             
             if function_name == "get_book_titles":
-
+                print("Función get_book_titles llamada")
                 import json
                 args = json.loads(function_args)
                 book_titles = get_book_titles(args['libro'])
-
+                book_titles2 = ', '.join(book_titles)
+                natural_answer = gpt_call_assistant(book_titles2, thread)
+                
                 # Lista de titulos
-                return book_titles
+                return natural_answer
 
         else:
             # Si no hay función, simplemente devuelve el mensaje de ChatGPT
-            print("Type: ", type(message['content']))
-            return message['content']
+            return (message, thread)
     
     except Exception as e:
         return f"Error: {str(e)}"
 
 
 # Example usage:
-user_input = "Buscame el libro de El principe"
-response = gpt_call_function(user_input)
-print(response)
+# user_input = "Buscame el libro de El principe"
+# response = gpt_call_function(user_input, None)
+# print(response)
